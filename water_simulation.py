@@ -387,11 +387,11 @@ class WaterWualitySimulation:
 
         plt.show()
 
-sim = WaterWualitySimulation()
-sim.initSensor()
-sim.simulate()
+# sim = WaterWualitySimulation()
+# sim.initSensor()
+# sim.simulate()
 
-sim.AnimateSensors(
-    ['region1', 'region3'],
-    saveMode=True
-)
+# sim.AnimateSensors(
+#     ['region1', 'region3'],
+#     saveMode=True
+# )
