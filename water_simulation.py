@@ -10,9 +10,9 @@ class WaterWualitySimulation:
     def __init__(
         self,
         sensor_args = [
-            {'name': 'region1', 'xpos': 138, 'ypos':413, 'color': [255, 0, 0], 'size':(15, 15)},
+            {'name': 'region1', 'xpos': 150, 'ypos':400, 'color': [255, 0, 0], 'size':(15, 15)},
             # {'name': 'region2', 'xpos': 138, 'ypos':138, 'color': [0, 255, 0], 'size':(15, 15)},
-            {'name': 'region3', 'xpos': 413, 'ypos':138, 'color': [0, 0, 255], 'size':(15, 15)},
+            {'name': 'region3', 'xpos': 400, 'ypos':150, 'color': [0, 0, 255], 'size':(15, 15)},
             # {'name': 'region4', 'xpos': 413, 'ypos':413, 'color': [255, 0, 255], 'size':(15, 15)},
         ],
         pond_args = {'width': 550, 'height': 550, 'color':  [177, 220, 234], 'initial_frame': np.full((550, 550, 3), [177, 220, 234], dtype=np.uint8)},

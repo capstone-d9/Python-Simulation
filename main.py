@@ -24,5 +24,5 @@ pond_args = {
 
 sim = SensorPlacementSimulation(sensor_agents=sensor_agents, pond_args=pond_args)
 sim.initSensor()
-sim.simulate(num_iter=3*60)
-sim.Animate(saveMode=True)
+# sim.simulate(num_iter=3*60)
+# sim.Animate(saveMode=True)

@@ -133,7 +133,9 @@ class SensorPlacementSimulation:
                 sun_T = self.sunHeat(time)
                 
                 change_value = current_value - (north + south + west + east) / 4 + sun_T * 0.05
-                new[h-1, w-1][0] += int(change_value * alpha)
+                change_value = int(change_value * alpha)
+                
+                new[h-1, w-1][0] += max(change_value, 0)
                 
         self.__pondTemp__.append(new)
                     
