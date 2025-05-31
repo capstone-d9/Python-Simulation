@@ -19,11 +19,9 @@ class SensorAgent:
     
     def takeTempValue(self, val):
         self.__storedTampvalue__.append(val)
-        return val
     
     def takepHValue(self, val):
         self.__storedpHvalue__.append(val)
-        return val
     
     @property
     def stored_value(self):
@@ -37,8 +35,8 @@ class SensorPlacementSimulation:
         pond_args = {
             'width': 550, 'height': 550,
             'color':  [177, 220, 234],
-            'max_T': 35,
-            'min_T': 27,
+            'max_T': 38,
+            'min_T': 24,
             'min_pH': 6.0,
             'max_pH': 8,
             'initial_frame': np.full((550, 550, 3), [177, 220, 234], dtype=np.uint8)
@@ -107,8 +105,21 @@ class SensorPlacementSimulation:
         frame_value = self.__pondpH__[-1][sensor.ypos, sensor.xpos]
         val = self.pixelToPH(frame_value[1])
         sensor.takepHValue(val)
-    
-    def changeTempbyNeighborhood(self, alpha=0.1, beta=0.5):
+        
+    def sunHeat(self, t):
+        """
+        t : waktu dalam menit (0–1440)
+        """
+        suhu_min = 12
+        suhu_max = 34.0
+
+        # Ubah periode sinyal harian (1440 menit = 24 jam)
+        T = suhu_min + (suhu_max - suhu_min) * np.sin((np.pi / 720) * (t - 360))  # 360 = jam 6 pagi
+        T = np.clip(T, suhu_min, suhu_max)
+
+        return T
+
+    def changeTempbyNeighborhood(self, alpha=1, time=0):
         last_frame = np.pad(self.__pondTemp__[-1].copy(), pad_width=1, mode='constant', constant_values=0)
         new = self.__pondTemp__[-1].copy()
         for h in range(1, self.pond_h + 1):
@@ -118,11 +129,12 @@ class SensorPlacementSimulation:
                 south = int(last_frame[h + 1, w][1])
                 west  = int(last_frame[h, w - 1][1])
                 east  = int(last_frame[h, w + 1][1])
-                southeast = int(last_frame[h + 1, w + 1][1])
                 
-                change_value = current_value - (north + south + west + east) / 4
-                self.anjing.append(change_value)
+                sun_T = self.sunHeat(time)
+                
+                change_value = current_value - (north + south + west + east) / 4 + sun_T * 0.05
                 new[h-1, w-1][0] += int(change_value * alpha)
+                
         self.__pondTemp__.append(new)
                     
     def changePHbyNeighborhood(self):
@@ -135,8 +147,8 @@ class SensorPlacementSimulation:
         self.__pondpH__.append(new)
     
     def simulate(self, num_iter=5):
-        for i in tqdm(range(num_iter)):
-            self.changeTempbyNeighborhood()
+        for t in tqdm(range(num_iter)):
+            self.changeTempbyNeighborhood(time=t)
             self.changePHbyNeighborhood()
             for sensor in self.sensors:
                 self.samplingpH(sensor)
@@ -182,7 +194,7 @@ class SensorPlacementSimulation:
         def update(idx):
             im_temp.set_array(self.__pondTemp__[idx])
             im_ph.set_array(self.__pondpH__[idx])
-            im_sensor.set_array(self.__frameDatas__[-1])  # Atau bisa pakai self.initial__frame jika ingin
+            im_sensor.set_array(self.__frameDatas__[-1])
 
             for sensor in self.sensors:
                 name = sensor.name
@@ -209,3 +221,21 @@ class SensorPlacementSimulation:
             ani.save(file_path)
 
         plt.show()
+
+def random_initial_temp(
+        frame,
+        num_regions=5, min_size=30, max_size=100,
+        box_color=(0, 220, 234)
+    ):
+    height, width, c = frame.shape
+
+    for _ in range(num_regions):
+        w = random.randint(min_size, max_size)
+        h = random.randint(min_size, max_size)
+        x = random.randint(0, width - w)
+        y = random.randint(0, height - h)
+
+        # Gambar kotak pada area frame
+        frame[y:y+h, x:x+w] = box_color
+
+    return frame
