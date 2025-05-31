@@ -11,9 +11,9 @@ class WaterWualitySimulation:
         self,
         sensor_args = [
             {'name': 'region1', 'xpos': 138, 'ypos':413, 'color': [255, 0, 0], 'size':(15, 15)},
-            {'name': 'region2', 'xpos': 138, 'ypos':138, 'color': [0, 255, 0], 'size':(15, 15)},
+            # {'name': 'region2', 'xpos': 138, 'ypos':138, 'color': [0, 255, 0], 'size':(15, 15)},
             {'name': 'region3', 'xpos': 413, 'ypos':138, 'color': [0, 0, 255], 'size':(15, 15)},
-            {'name': 'region4', 'xpos': 413, 'ypos':413, 'color': [255, 0, 255], 'size':(15, 15)},
+            # {'name': 'region4', 'xpos': 413, 'ypos':413, 'color': [255, 0, 255], 'size':(15, 15)},
         ],
         pond_args = {'width': 550, 'height': 550, 'color':  [177, 220, 234], 'initial_frame': np.full((550, 550, 3), [177, 220, 234], dtype=np.uint8)},
     ):
@@ -152,7 +152,7 @@ class WaterWualitySimulation:
             for key in self.__calculated_do_rate_change__:
                 
                 pH = self.pHSimulation(t=time) + random.random() * 1.2 - 0.6
-                T = self.tempSimulation(t=time) + random.random() * 2 - 1
+                T = self.tempSimulation(t=time) + random.random() * 4 - 2
                 ddo_dt = self.dDOdt_reduced(DO=initialDO[key], pH=pH, T=T) / 24
                 DO_estimated = initialDO[key] + ddo_dt
                 
@@ -386,3 +386,12 @@ class WaterWualitySimulation:
             ani.save(file_path)
 
         plt.show()
+
+sim = WaterWualitySimulation()
+sim.initSensor()
+sim.simulate()
+
+sim.AnimateSensors(
+    ['region1', 'region3'],
+    saveMode=True
+)

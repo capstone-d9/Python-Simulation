@@ -108,7 +108,7 @@ class SensorPlacementSimulation:
         
     def sunHeat(self, t):
         """
-        t : waktu dalam menit (0–1440)
+        t : waktu dalam menit (0-1440)
         """
         suhu_min = 12
         suhu_max = 34.0
@@ -206,11 +206,11 @@ class SensorPlacementSimulation:
             ax[4].relim()
             ax[4].autoscale_view()
 
-            # Update correlation plot
-            ax[5].cla()
-            ax[5].set_title("Correlation (R²)")
-            temp_corr = self.corelationTemp(idx)
-            ph_corr = self.corelationPH(idx)
+            # # Update correlation plot
+            # ax[5].cla()
+            # ax[5].set_title("Correlation (R²)")
+            # temp_corr = self.corelationTemp(idx)
+            # ph_corr = self.corelationPH(idx)
 
             y_labels = []
             bar_values = []
@@ -219,7 +219,7 @@ class SensorPlacementSimulation:
             for sensor in self.sensors:
                 name = sensor.name
                 y_labels.extend([f"{name} T", f"{name} pH"])
-                bar_values.extend([temp_corr[name], ph_corr[name]])
+                # bar_values.extend([temp_corr[name], ph_corr[name]])
                 sensor_color = np.array(sensor.sensor_color) / 255.0
                 bar_colors.extend([sensor_color, sensor_color * 0.7])  # T dan pH dibedakan
 
