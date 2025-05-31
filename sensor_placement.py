@@ -167,6 +167,9 @@ class SensorPlacementSimulation:
         ax[3].set_title("Temperature Value Captured")
         ax[4].set_title("pH Value Captured")
         ax[5].set_title("Correlation")
+        
+        temp_corr = self.corelationTemp()
+        ph_corr = self.corelationPH()
 
         for i in [0, 1, 2]:
             ax[i].axis('off')
@@ -185,7 +188,8 @@ class SensorPlacementSimulation:
 
             lines[name] = {
                 'T': ax[3].plot([], [], label=name, color=color)[0],
-                'pH': ax[4].plot([], [], label=name, color=color)[0]
+                'pH': ax[4].plot([], [], label=name, color=color)[0],
+                'Corelation': ax[5].plot([], [], label=name, color=color)[0]
             }
 
         for i in [3, 4, 5]:
@@ -222,6 +226,36 @@ class SensorPlacementSimulation:
 
         plt.show()
 
+    def r_squared(self, y_true, y_pred):
+        y_true = np.array(y_true)
+        y_pred = np.array(y_pred)
+        ss_res = np.sum((y_true - y_pred) ** 2)
+        ss_tot = np.sum((y_true - np.mean(y_true)) ** 2)
+        return 1 - ss_res / ss_tot if ss_tot != 0 else 0
+
+    def corelationTemp(self, up_to):
+        results = {}
+        for sensor in self.sensors:
+            temps = sensor.__storedTampvalue__[:up_to]
+            time = list(range(len(temps)))
+            if len(temps) > 1:
+                results[sensor.name] = self.r_squared(time, temps)
+            else:
+                results[sensor.name] = 0
+        return results
+
+    def corelationPH(self, up_to):
+        results = {}
+        for sensor in self.sensors:
+            phs = sensor.__storedpHvalue__[:up_to]
+            time = list(range(len(phs)))
+            if len(phs) > 1:
+                results[sensor.name] = self.r_squared(time, phs)
+            else:
+                results[sensor.name] = 0
+        return results
+        
+    
 def random_initial_temp(
         frame,
         num_regions=5, min_size=30, max_size=100,
