@@ -135,8 +135,15 @@ class SensorPlacementSimulation:
                 change_value = current_value - (north + south + west + east) / 4 + sun_T * 0.05
                 change_value = int(change_value * alpha)
                 
-                new[h-1, w-1][0] += max(change_value, 0)
+                new[h-1, w-1][0] += change_value
                 
+                if new[h-1, w-1][0] + change_value < 0:
+                    new[h-1, w-1][0] = 0
+                elif new[h-1, w-1][0] + change_value > 255:
+                    new[h-1, w-1][0]
+                else:
+                    new[h-1, w-1][0] += change_value
+                    
         self.__pondTemp__.append(new)
                     
     def changePHbyNeighborhood(self):
