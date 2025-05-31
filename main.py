@@ -1,5 +1,4 @@
 import numpy as np
-import random
 from utils import SensorAgent, SensorPlacementSimulation, random_initial_temp
 
 frame = np.full((550, 550, 3), [177, 220, 234], dtype=np.uint8)
@@ -26,4 +25,4 @@ pond_args = {
 sim = SensorPlacementSimulation(sensor_agents=sensor_agents, pond_args=pond_args)
 sim.initSensor()
 sim.simulate(num_iter=12)
-sim.Animate()
+sim.Animate(saveMode=True)
