@@ -167,29 +167,22 @@ class SensorPlacementSimulation:
         ax[3].set_title("Temperature Value Captured")
         ax[4].set_title("pH Value Captured")
         ax[5].set_title("Correlation")
-        
-        temp_corr = self.corelationTemp()
-        ph_corr = self.corelationPH()
 
         for i in [0, 1, 2]:
             ax[i].axis('off')
 
-        # Inisialisasi plot gambar awal
         im_temp = ax[0].imshow(self.__pondTemp__[0])
         im_ph = ax[1].imshow(self.__pondpH__[0])
         im_sensor = ax[2].imshow(self.__frameDatas__[-1])
         num_frames = min(len(self.__pondTemp__), len(self.__pondpH__))
 
-        # Buat dict line chart untuk masing-masing sensor
         lines = {}
         for sensor in self.sensors:
             color = np.array(sensor.sensor_color) / 255.0
             name = sensor.name
-
             lines[name] = {
                 'T': ax[3].plot([], [], label=name, color=color)[0],
-                'pH': ax[4].plot([], [], label=name, color=color)[0],
-                'Corelation': ax[5].plot([], [], label=name, color=color)[0]
+                'pH': ax[4].plot([], [], label=name, color=color)[0]
             }
 
         for i in [3, 4, 5]:
@@ -212,6 +205,29 @@ class SensorPlacementSimulation:
             ax[3].autoscale_view()
             ax[4].relim()
             ax[4].autoscale_view()
+
+            # Update correlation plot
+            ax[5].cla()
+            ax[5].set_title("Correlation (R²)")
+            temp_corr = self.corelationTemp(idx)
+            ph_corr = self.corelationPH(idx)
+
+            y_labels = []
+            bar_values = []
+            bar_colors = []
+
+            for sensor in self.sensors:
+                name = sensor.name
+                y_labels.extend([f"{name} T", f"{name} pH"])
+                bar_values.extend([temp_corr[name], ph_corr[name]])
+                sensor_color = np.array(sensor.sensor_color) / 255.0
+                bar_colors.extend([sensor_color, sensor_color * 0.7])  # T dan pH dibedakan
+
+            y_pos = np.arange(len(y_labels))
+            ax[5].barh(y_pos, bar_values, color=bar_colors)
+            ax[5].set_yticks(y_pos)
+            ax[5].set_yticklabels(y_labels)
+            ax[5].set_xlim(-1, 1)
 
             return [im_temp, im_ph, im_sensor] + [line for sensor_lines in lines.values() for line in sensor_lines.values()]
 
