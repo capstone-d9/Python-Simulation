@@ -1,18 +1,29 @@
-from utils import WaterWualitySimulation
+import numpy as np
+from utils import SensorAgent, SensorPlacementSimulation
 
-ecosystem = WaterWualitySimulation(
-    sensor_args = [
-        {'name': 'region1', 'xpos': 138, 'ypos':413, 'color': [255, 0, 0], 'size':(15, 15)},
-        {'name': 'region2', 'xpos': 138, 'ypos':138, 'color': [0, 255, 0], 'size':(15, 15)},
-        {'name': 'region3', 'xpos': 413, 'ypos':138, 'color': [0, 0, 255], 'size':(15, 15)},
-        {'name': 'region4', 'xpos': 413, 'ypos':413, 'color': [255, 0, 255], 'size':(15, 15)},
-    ],
-)
+frame = np.full((550, 550, 3), [177, 220, 234], dtype=np.uint8)
+w = 50
+h = 50
+frame[225 - w:225 + w:225 - h,:] = [0, 220, 234]
 
-# must do
-ecosystem.initSensor()
-ecosystem.simulate(num_sim=24*2)
+sensor_agents = [
+    SensorAgent('region1', 138, 413, 15, 15, [255, 0, 0]),
+    SensorAgent('region2', 138, 138, 15, 15, [0, 255, 0]),
+    SensorAgent('region3', 413, 138, 15, 15, [0, 0, 255]),
+    SensorAgent('region4', 413, 413, 15, 15, [255, 0, 255]),
+]
 
-# ecosystem.AnimateSensors(sensor_names=['region1', 'region3'])
-# ecosystem.AnimateDOOverview()
+pond_args = {
+    'width': 550, 'height': 550, 
+    'color':  [0, 220, 234],
+    'max_T': 35,
+    'min_T': 27,
+    'min_pH': 6.0,
+    'max_pH': 8,
+    'initial_frame': frame
+}
 
+sim = SensorPlacementSimulation(sensor_agents=sensor_agents, pond_args=pond_args)
+sim.initSensor()
+sim.simulate(num_iter=0)
+sim.Animate()
