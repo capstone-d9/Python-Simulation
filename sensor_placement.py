@@ -5,7 +5,7 @@ import random
 from datetime import datetime
 import os
 from tqdm import tqdm
-from itertools import permutations
+from itertools import combinations
 
 class SensorAgent:
     def __init__(self, name, xpos, ypos, w, h, color):
@@ -56,7 +56,7 @@ class SensorPlacementSimulation:
         self.__frameDatas__ = [self.initial__frame.copy()]
         
         self.__pondTemp__ = [self.changeTempFrameToTemp(self.initial__frame.copy())]
-        self.__pondpH__ = [self.changePHFrameToTemp(self.initial__frame.copy())]
+        self.__pondpH__ = [self.changePHFrameTopH(self.initial__frame.copy())]
         
         self.__sensor_frames__ = [np.full((550, 550, 3), [177, 220, 234], dtype=np.uint8)]
         
@@ -65,7 +65,6 @@ class SensorPlacementSimulation:
         self.__temp_sensor__ = {}
         self.__pH_sensor__ = {}
         
-    
     def initSensor(self):
         for sensor in self.sensors:
             ypos_temp = sensor.ypos
@@ -112,17 +111,17 @@ class SensorPlacementSimulation:
         val = np.clip(val, self.pond_min_T, self.pond_max_T)
         return val
     
-    def changePHFrameToTemp(self, frame):
+    def changePHFrameTopH(self, frame):
         green_channel = self.changePHFrame(frame)
         val = self.pond_min_pH + (self.pond_max_pH - self.pond_min_pH) * green_channel / 255
-        val = np.clip(val, self.pond_min_pH, self.pond_max_pH)
+        # val = np.clip(val, self.pond_min_pH, self.pond_max_pH)
         return val
     
     def sunHeat(self, t):
         suhu_min = self.pond_min_T
         suhu_max = self.pond_max_T
         intensity = np.sin((np.pi / 24) * (t - 6))
-        intensity = np.clip(intensity, 0, 1)
+        # intensity = np.clip(intensity, 0, 1)
 
         heat_map = np.tile(np.linspace(1.0, 0.6, self.pond_w), (self.pond_h, 1))
         T = suhu_min + (suhu_max - suhu_min) * intensity * heat_map
@@ -137,18 +136,8 @@ class SensorPlacementSimulation:
         for h in range(1, self.pond_h + 1):
             for w in range(1, self.pond_w + 1):
                 # Koordinat piksel saat ini (tanpa padding)
-                px, py = w - 1, h - 1
-                aerator_x, aerator_y = 413, 138
-
-                # Jarak Euclidean dari titik aerator
-                dist = np.hypot(px - aerator_x, py - aerator_y)
-
-                if dist == 0:
-                    aerator_factor = 1.0  # titik aerator langsung
-                elif dist < 10:
-                    aerator_factor = 12.0 / dist  # semakin dekat, semakin besar
-                else:
-                    aerator_factor = 0.0  # di luar pengaruh aerator
+                # px, py = w - 1, h - 1
+                # aerator_x, aerator_y = 413, 138
 
                 current_value = last_frame[h, w]
                 neighbors = [
@@ -156,15 +145,17 @@ class SensorPlacementSimulation:
                     last_frame[h + 1, w],
                     last_frame[h, w - 1],
                     last_frame[h, w + 1],
+                    last_frame[h + 1, w + 1],
+                    last_frame[h - 1, w + 1],
+                    last_frame[h + 1, w - 1],
+                    last_frame[h - 1, w - 1],
                 ]
-                neighbor_avg = sum(neighbors) / 4
+                neighbor_avg = sum(neighbors) / 8
 
                 diffusion = alpha * (neighbor_avg - current_value)
                 sun_effect = 0.05 * (sun_matrix[h - 1, w - 1] - current_value)
-                cooling_effect = -aerator_factor * alpha
 
-                updated_value = current_value + diffusion + sun_effect + cooling_effect
-                updated_value = np.clip(updated_value, self.pond_min_T, self.pond_max_T)
+                updated_value = current_value + diffusion + sun_effect
                 new[h - 1, w - 1] = updated_value
         
         self.__pondTemp__.append(new)
@@ -200,29 +191,52 @@ class SensorPlacementSimulation:
                 self.samplingpH(sensor)
                 self.samplingTemp(sensor)
         
-    def corelation(self, y_true, y_pred):
+    def msedata(self, y_true, y_pred):
         y_true = np.array(y_true)
         y_pred = np.array(y_pred)
-        ss_res = np.sum((y_true - y_pred) ** 2)
-        ss_tot = np.sum((y_true - np.mean(y_true)) ** 2)
-        return 1 - ss_res / ss_tot if ss_tot != 0 else 0
+        # ss_res = np.sum((y_true - y_pred) ** 2)
+        # ss_tot = np.sum((y_true - np.mean(y_true)) ** 2)
+        # return 1 - ss_res / ss_tot if ss_tot != 0 else 0
+        return np.mean((y_pred - y_true)**2)
 
-    def corelationTemp(self, up_to):
+    def rTemp(self, up_to):
         sensor_names = []
         sensor_val = []
-        for sensor1, sensor2 in permutations(self.sensors, 2):
-            corelation = self.corelation(sensor1.stored_value[0][:up_to], sensor2.stored_value[0][:up_to])
+        for sensor1, sensor2 in combinations(self.sensors, 2):
+            r_squared = self.r_squared(sensor1.stored_value[0][:up_to], sensor2.stored_value[0][:up_to])
             sensor_names.append(f"{sensor1.name}-{sensor2.name}")
-            sensor_val.append(corelation)
+            sensor_val.append(r_squared)
         return sensor_names, sensor_val
+    
+    def r_squared(self, d1, d2):
+        if len(d1) != len(d2):
+            raise ValueError("Input lists must have the same length.")
+        if len(d1) < 2:
+            return 0
 
-    def corelationPH(self, up_to):
+        n = len(d1)
+        sum_x = sum(d1)
+        sum_y = sum(d2)
+        sum_x2 = sum(x ** 2 for x in d1)
+        sum_y2 = sum(y ** 2 for y in d2)
+        sum_xy = sum(x * y for x, y in zip(d1, d2))
+
+        numerator = n * sum_xy - sum_x * sum_y
+        denominator = ((n * sum_x2 - sum_x ** 2) * (n * sum_y2 - sum_y ** 2)) ** 0.5
+
+        if denominator == 0:
+            return 0
+
+        r = numerator / denominator
+        return r ** 2
+
+    def rpH(self, up_to):
         sensor_names = []
         sensor_val = []
-        for sensor1, sensor2 in permutations(self.sensors, 2):
-            corelation = self.corelation(sensor1.stored_value[1][:up_to], sensor2.stored_value[1][:up_to])
+        for sensor1, sensor2 in combinations(self.sensors, 2):
+            r_squared = self.r_squared(sensor1.stored_value[1][:up_to], sensor2.stored_value[1][:up_to])
             sensor_names.append(f"{sensor1.name}-{sensor2.name}")
-            sensor_val.append(corelation)
+            sensor_val.append(r_squared)
         return sensor_names, sensor_val
 
     def Animate(self, file_path=None, saveMode=False):
@@ -237,13 +251,15 @@ class SensorPlacementSimulation:
         ax[2].set_title("Sensor Placement")
         ax[3].set_title("Temperature Value Captured")
         ax[4].set_title("pH Value Captured")
-        ax[5].set_title("Correlation")
+        ax[5].set_title("R Squared Score")
 
         for i in [0, 1, 2]:
             ax[i].axis('off')
 
-        im_temp = ax[0].imshow(self.__pondTemp__[0], cmap='hot', vmax=self.pond_max_T, vmin=self.pond_min_T)
+        im_temp = ax[0].imshow(self.__pondTemp__[0], cmap='cividis', vmax=self.pond_max_T - 10, vmin=self.pond_min_T + 10)
+        fig.colorbar(im_temp, ax=ax[0])
         im_ph = ax[1].imshow(self.__pondpH__[0], cmap='viridis', vmax=self.pond_max_pH, vmin=self.pond_min_pH)
+        fig.colorbar(im_ph, ax=ax[1])
         im_sensor = ax[2].imshow(self.__frameDatas__[-1])
         num_frames = min(len(self.__pondTemp__), len(self.__pondpH__))
 
@@ -256,8 +272,8 @@ class SensorPlacementSimulation:
                 'T': ax[3].plot([], [], label=name, color=color)[0],
                 'pH': ax[4].plot([], [], label=name, color=color)[0],
             }
-        line_temp = ax[5].plot([], [], label="Temperature Corelation", color='red')[0]
-        line_ph = ax[5].plot([], [], label="pH Corelation", color='blue')[0]
+        line_temp = ax[5].plot([], [], label="Temperature Corelation", marker='o', color='red')[0]
+        line_ph = ax[5].plot([], [], label="pH Corelation", marker='x', color='blue')[0]
 
         ax[3].legend(loc='upper right', fontsize='small')
         ax[4].legend(loc='upper right', fontsize='small')
@@ -280,8 +296,8 @@ class SensorPlacementSimulation:
 
                 updated_artists.extend([lines[name]['T'], lines[name]['pH']])
             
-            names, temp_cor = self.corelationTemp(idx)
-            names, val_cor = self.corelationPH(idx)
+            names, temp_cor = self.rTemp(idx)
+            names, val_cor = self.rpH(idx)
             line_temp.set_data(list(range(len(names))), temp_cor)
             line_ph.set_data(list(range(len(names))), val_cor)
             
@@ -297,7 +313,7 @@ class SensorPlacementSimulation:
             return updated_artists
 
         plt.tight_layout()
-        ani = FuncAnimation(fig, update, frames=num_frames, interval=20, blit=False)
+        ani = FuncAnimation(fig, update, frames=num_frames, interval=200, blit=False)
 
         if saveMode:
             dir_path = os.path.dirname(file_path)
@@ -310,7 +326,7 @@ class SensorPlacementSimulation:
 def random_initial_temp(
         frame,
         num_regions=5, min_size=30, max_size=100,
-        box_color=(random.randint(177, 255), 120, 234)
+        box_color=(random.randint(177, 255), random.randint(220, 225), 234)
     ):
     height, width, c = frame.shape
 

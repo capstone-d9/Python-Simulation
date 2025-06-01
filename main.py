@@ -1,14 +1,25 @@
 import numpy as np
-from utils import SensorAgent, SensorPlacementSimulation, random_initial_temp
+from utils import SensorAgent, SensorPlacementSimulation, random_initial_temp, WaterWualitySimulation
 
 frame = np.full((550, 550, 3), [177, 220, 234], dtype=np.uint8)
-frame = random_initial_temp(frame=frame, num_regions=10)
+frame = random_initial_temp(frame=frame, num_regions=5)
 
-sensor_agents = [
-    SensorAgent('region1', 138, 413, 15, 15, [255, 0, 0]),
-    SensorAgent('region2', 138, 138, 15, 15, [0, 255, 0]),
-    SensorAgent('region3', 413, 413, 15, 15, [255, 0, 0]),
-    SensorAgent('region3', 413, 138, 15, 15, [0, 0, 255]),
+sensor_simulation = [
+    [
+        SensorAgent('region1', 45, 505, 15, 15, [0, 255, 0]),
+        SensorAgent('region2', 45, 45, 15, 15, [255, 0, 0]),
+        SensorAgent('region3', 505, 505, 15, 15, [255, 255, 0]),
+        SensorAgent('region4', 505, 45, 15, 15, [0, 0, 255]),
+    ],
+    [
+        SensorAgent('region1', 45, 45, 15, 15, [255, 0, 0]),
+        SensorAgent('region2', 505, 45, 15, 15, [0, 255, 0]),
+        SensorAgent('region3', 275, 505, 15, 15, [0, 0, 255]),
+    ],
+    [
+        SensorAgent('region1', 505, 505, 15, 15, [255, 0, 0]),
+        SensorAgent('region2', 45, 45, 15, 15, [0, 255, 0]),
+    ],
 ]
 
 pond_args = {
@@ -21,7 +32,7 @@ pond_args = {
     'initial_frame': frame
 }
 
-sim = SensorPlacementSimulation(sensor_agents=sensor_agents, pond_args=pond_args)
+sim = SensorPlacementSimulation(sensor_agents=sensor_simulation[2], pond_args=pond_args)
 sim.initSensor()
-sim.simulate(num_iter=8)
-sim.Animate(saveMode=False)
+sim.simulate(num_iter=24)
+sim.Animate(saveMode=True, file_path=f'result/simulation-with-2-sensors.gif')
