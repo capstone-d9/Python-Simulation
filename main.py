@@ -2,14 +2,13 @@ import numpy as np
 from utils import SensorAgent, SensorPlacementSimulation, random_initial_temp
 
 frame = np.full((550, 550, 3), [177, 220, 234], dtype=np.uint8)
-
 frame = random_initial_temp(frame=frame, num_regions=10)
 
 sensor_agents = [
     SensorAgent('region1', 138, 413, 15, 15, [255, 0, 0]),
-    # SensorAgent('region2', 138, 138, 15, 15, [0, 255, 0]),
+    SensorAgent('region2', 138, 138, 15, 15, [0, 255, 0]),
+    SensorAgent('region3', 413, 413, 15, 15, [255, 0, 0]),
     SensorAgent('region3', 413, 138, 15, 15, [0, 0, 255]),
-    # SensorAgent('region4', 413, 413, 15, 15, [255, 0, 255]),
 ]
 
 pond_args = {
@@ -24,5 +23,5 @@ pond_args = {
 
 sim = SensorPlacementSimulation(sensor_agents=sensor_agents, pond_args=pond_args)
 sim.initSensor()
-sim.simulate(num_iter=3*60)
-sim.Animate(saveMode=True)
+sim.simulate(num_iter=8)
+sim.Animate(saveMode=False)

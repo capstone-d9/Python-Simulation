@@ -77,7 +77,7 @@ class WaterWualitySimulation:
         # Default parameters (kalibrasi sesuaikan dengan data lapangan)
         if params is None:
             params = {
-                'k_aeration': 0.2,
+                'k_aeration': 0.1,
                 'k_r20': 0.0015, # sesuai
                 'theta_r': 1.024, # sesuai
                 'mu_max': 2.2, # sesuai
@@ -86,8 +86,8 @@ class WaterWualitySimulation:
                 'pH_opt': 6.8, # sesuai
                 'R0': 3.0,
                 'k_T': 0.063,
-                'R_max': 1.0, 
-                # 'R_max': 0.5, # sesuai
+                # 'R_max': 1.0,
+                'R_max': 0.6, # sesuai
                 'k20': 0.0015, # sesuai
                 'theta_d': 0.25,
                 'K_DO': 0.10, # sesuai
@@ -108,7 +108,6 @@ class WaterWualitySimulation:
         respirasi_ikan = params['R0'] * np.exp(params['k_T'] * T)
         
         # (IV) Respirasi fitoplankton
-        # respirasi_fito = params['R_max'] * params['B_alg'] * f_T
         respirasi_fito = params['R_max'] * params['B_alg'] * f_T
         
         # (V) Biodegradasi bahan organik
@@ -273,7 +272,7 @@ class WaterWualitySimulation:
         ax[1].set_ylim(15, 35)
         ax[2].set_ylim(6, 8)
         ax[4].set_ylim(-0.5, 0.5)
-        ax[5].set_ylim(-1, 5)
+        ax[5].set_ylim(-1, 10)
 
         # Image plots
         im0 = ax[0].imshow(self.__frameDatas__[0])
@@ -386,12 +385,3 @@ class WaterWualitySimulation:
             ani.save(file_path)
 
         plt.show()
-
-# sim = WaterWualitySimulation()
-# sim.initSensor()
-# sim.simulate()
-
-# sim.AnimateSensors(
-#     ['region1', 'region3'],
-#     saveMode=True
-# )
